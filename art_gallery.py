@@ -43,33 +43,22 @@ def set_bg_hack(main_bg):
     )
 
 
-def add_bg_from_local():
-    image_files = ["assets/pic1.jpg", "assets/pic2.jpg", "assets/pic3.jpg"]
-
-    image_base64 = [get_image_base64(img) for img in image_files]
-
+def add_bg_from_url():
     st.markdown(
         f"""
-    <style>
-    .stApp {{
-        background-image: url(data:assets/assets/pic1.jpg;base64,{image_base64[0]});
-        background-size: cover;
-        animation: slideshow 20s linear infinite;
-    }}
-    @keyframes slideshow {{
-        0% {{ background-image: url(data:assets/pic1.jpg;base64,{image_base64[0]}); }}
-        25% {{ background-image: url(data:assets/pic2.jpg;base64,{image_base64[1]}); }}
-        50% {{ background-image: url(data:assets/pic3.jpg;base64,{image_base64[2]}); }}
-    }}
-    </style>
-    """,
+         <style>
+         .stApp {{
+             background-image: url("assets\pic4.jpg");
+             background-attachment: fixed;
+             background-size: cover
+         }}
+         </style>
+         """,
         unsafe_allow_html=True,
     )
 
 
-# Call this function at the beginning of your app
-add_bg_from_local()
-
+add_bg_from_url()
 # Rest of your Streamlit app code...
 
 
