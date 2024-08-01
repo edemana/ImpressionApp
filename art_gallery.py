@@ -1,6 +1,8 @@
 import streamlit as st
 import pandas as pd
 import mysql.connector
+from streamlit_authenticator import Authenticate
+import psycopg2
 
 # Connect to your database
 cnx = mysql.connector.connect(
@@ -34,14 +36,12 @@ def add_artwork():
     date_received = st.date_input("Date Received", key="add_date_received")
     genre = st.text_input("Genre", key="add_artwork_genre")
     estimated_value = st.number_input("Estimated Value", key="add_artwork_value")
-    status = st.selectbox(
-        "Status", ["Available", "Sold", "Loaned"], key="add_artwork_status"
-    )
+
     if st.button("Add Artwork", key="add_artwork_button") and not add_clicked:
         add_clicked = True
         cursor.execute(
-            "INSERT INTO Artwork (Title, DateCreated, DateReceived, Genre, EstimatedValue, Status_) VALUES (%s, %s, %s, %s, %s, %s)",
-            (title, date_created, date_received, genre, estimated_value, status),
+            "INSERT INTO Artwork (Title, DateCreated, DateReceived, Genre, EstimatedValue) VALUES (%s, %s, %s, %s, %s)",
+            (title, date_created, date_received, genre, estimated_value),
         )
         cnx.commit()
         add_clicked = False
@@ -114,8 +114,8 @@ def add_artist():
                 (artistID, fname, lname, address, email),
             )
             cnx.commit()
-            st.success("Artist added successfully")
             add_clicked = False
+            st.success("Artist added successfully")
 
 
 def delete_artist():
@@ -158,7 +158,7 @@ def record_transaction():
     transaction_date = st.date_input("Transaction Date")
     total_amount = st.number_input("Total Amount")
     payment_method = st.selectbox(
-        "Payment Method", ["Cash", "Credit Card", "Bank Transfer"]
+        "Payment Method", ["Cash", "Credit Card", "Debit Card", "Bank Transfer"]
     )
 
     cursor.execute("SELECT * FROM customers WHERE CustomerID = %s", (customer_id,))
@@ -472,6 +472,8 @@ def generate_report():
         view_number_of_artworks_per_artist()
 
 
+# Login section
+# with st.form("login"):
 # Create Streamlit pages
 st.title("Art Gallery Database")
 
@@ -536,6 +538,23 @@ elif st.session_state.current_page == "Employee and Department Management":
 elif st.session_state.current_page == "Reporting and Analytics":
     st.title("Reporting and Analytics")
     generate_report()
+
+query = st.text_area("Enter your SQL query", height=00)
+
+# Execute query button
+if st.button("Execute Query"):
+    try:
+        cursor.execute(query)
+        results = cursor.fetchall()
+
+        # Display the results in a table
+        st.write("Query Results:")
+        st.table(results)
+
+    except Exception as e:
+        # Display any errors that occur during execution
+        st.error(f"Error executing query: {e}")
+
 
 # Close the cursor and connection
 cursor.close()
