@@ -44,12 +44,7 @@ def set_bg_hack(main_bg):
 
 
 def add_bg_from_local():
-    image_files = [
-        "assets/pic1.jpg",
-        "assets/pic2.jpg",
-        "assets/pic3.jpg",
-        "assets/pic4.jpg",
-    ]
+    image_files = ["assets/pic1.jpg", "assets/pic2.jpg", "assets/pic3.jpg"]
 
     image_base64 = [get_image_base64(img) for img in image_files]
 
@@ -65,8 +60,6 @@ def add_bg_from_local():
         0% {{ background-image: url(data:assets/pic1.jpg;base64,{image_base64[0]}); }}
         25% {{ background-image: url(data:assets/pic2.jpg;base64,{image_base64[1]}); }}
         50% {{ background-image: url(data:assets/pic3.jpg;base64,{image_base64[2]}); }}
-        75% {{ background-image: url(data:assets/pic4.jpg;base64,{image_base64[3]}); }}
-        100% {{ background-image: url(data:assets/pic1.jpg;base64,{image_base64[0]}); }}
     }}
     </style>
     """,
