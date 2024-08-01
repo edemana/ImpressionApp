@@ -16,6 +16,10 @@ cursor = cnx.cursor()
 
 # Define functions for each feature
 
+update_clicked = False
+add_clicked = False
+delete_clicked = False
+
 
 # Artwork Management
 def view_artworks():
@@ -24,36 +28,63 @@ def view_artworks():
 
 
 def add_artwork():
+    global add_clicked
     title = st.text_input("Title", key="add_artwork_title")
     date_created = st.date_input("Date Created", key="add_artwork_date")
+    date_received = st.date_input("Date Received", key="add_date_received")
     genre = st.text_input("Genre", key="add_artwork_genre")
     estimated_value = st.number_input("Estimated Value", key="add_artwork_value")
     status = st.selectbox(
         "Status", ["Available", "Sold", "Loaned"], key="add_artwork_status"
     )
-    if st.button("Add Artwork", key="add_artwork_button"):
+    if st.button("Add Artwork", key="add_artwork_button") and not add_clicked:
+        add_clicked = True
         cursor.execute(
-            "INSERT INTO Artwork (Title, DateCreated, Genre, EstimatedValue, Status_) VALUES (%s, %s, %s, %s, %s)",
-            (title, date_created, genre, estimated_value, status),
+            "INSERT INTO Artwork (Title, DateCreated, DateReceived, Genre, EstimatedValue, Status_) VALUES (%s, %s, %s, %s, %s, %s)",
+            (title, date_created, date_received, genre, estimated_value, status),
         )
         cnx.commit()
+        add_clicked = False
 
 
 def update_artwork():
+    global update_clicked
     artwork_id = st.number_input("Artwork ID", key="update_artwork_id")
     title = st.text_input("Title", key="update_artwork_title")
     date_created = st.date_input("Date Created", key="update_artwork_date")
+    date_received = st.date_input("Date Received", key="update_date_received")
     genre = st.text_input("Genre", key="update_artwork_genre")
     estimated_value = st.number_input("Estimated Value", key="update_artwork_value")
     status = st.selectbox(
         "Status", ["Available", "Sold", "Loaned"], key="update_artwork_status"
     )
-    if st.button("Update Artwork", key="update_artwork_button"):
+    if st.button("Update Artwork", key="update_artwork_button") and not update_clicked:
+        update_clicked = True
         cursor.execute(
-            "UPDATE Artwork SET Title = %s, DateCreated = %s, Genre = %s, EstimatedValue = %s, Status_ = %s WHERE ArtID = %s",
-            (title, date_created, genre, estimated_value, status, artwork_id),
+            "UPDATE Artwork SET Title = %s, DateCreated = %s,DateReceived =%s ,Genre = %s, EstimatedValue = %s, Status_ = %s WHERE ArtID = %s",
+            (
+                title,
+                date_created,
+                date_received,
+                genre,
+                estimated_value,
+                status,
+                artwork_id,
+            ),
         )
         cnx.commit()
+        update_clicked = False
+
+
+def delete_artwork():
+    global delete_clicked
+    artwork_id = st.number_input("Artwork ID", key="delete_artwork_id")
+    if st.button("Delete Artwork", key="delete_artwork_button") and not delete_clicked:
+        delete_clicked = True
+        cursor.execute("DELETE FROM Artwork WHERE ArtID = %s", (artwork_id,))
+        cnx.commit()
+        st.success("Artwork deleted successfully")
+        delete_clicked = False
 
 
 # Artist Management
@@ -63,19 +94,43 @@ def view_artists():
 
 
 def add_artist():
-    fname = st.text_input("First Name")
-    lname = st.text_input("Last Name")
-    email = st.text_input("Email")
-    if st.button("Add Artist"):
-        cursor.execute(
-            "INSERT INTO Artists (Fname, Lname, Email) VALUES (%s, %s, %s)",
-            (fname, lname, email),
-        )
+    global add_clicked
+    artistID = st.number_input("Artist ID")
+    # Check if ArtistID already exists
+    cursor.execute("SELECT * FROM artists WHERE ArtistID = %s", (artistID,))
+    existing_artist = cursor.fetchone()
+    if existing_artist:
+        st.error("Artist ID already exists")
+    else:
+        # Proceed with inserting the new record
+        fname = st.text_input("First Name")
+        lname = st.text_input("Last Name")
+        address = st.text_input("Address")
+        email = st.text_input("Email")
+        if st.button("Add Artist") and not add_clicked:
+            add_clicked = True
+            cursor.execute(
+                "INSERT INTO artists (ArtistID, Fname, Lname, Address, Email) VALUES (%s, %s, %s, %s, %s)",
+                (artistID, fname, lname, address, email),
+            )
+            cnx.commit()
+            st.success("Artist added successfully")
+            add_clicked = False
+
+
+def delete_artist():
+    global delete_clicked
+    artist_id = st.number_input("Artist ID", key="delete_artist_id")
+    if st.button("Delete Artist") and not delete_clicked:
+        delete_clicked = True
+        cursor.execute("DELETE FROM Artists WHERE ArtistID = %s", (artist_id,))
         cnx.commit()
+        st.success("Artist deleted successfully")
+        delete_clicked = False
 
 
 def list_artworks_by_artist():
-    artist_id = st.number_input("Artist ID")
+    artist_id = st.number_input("Artist ID", key="get_artist_id")
     artworks_df = pd.read_sql(
         "SELECT * FROM Artists WHERE ArtistID = %s", cnx, params=(artist_id,)
     )
@@ -87,24 +142,49 @@ def register_customer():
     fname = st.text_input("First Name")
     lname = st.text_input("Last Name")
     email = st.text_input("Email")
+    phone_number = st.text_input("Phone Number")
     if st.button("Register Customer"):
         cursor.execute(
-            "INSERT INTO Customers (Fname, Lname, Email) VALUES (%s, %s, %s)",
-            (fname, lname, email),
+            "INSERT INTO Customers (FirstName, LastName, Email, PhoneNumber) VALUES (%s, %s, %s,%s)",
+            (fname, lname, email, phone_number),
         )
         cnx.commit()
 
 
 def record_transaction():
+    transaction_id = st.number_input("Transaction ID")
     customer_id = st.number_input("Customer ID")
     artwork_id = st.number_input("Artwork ID")
-    sale_date = st.date_input("Sale Date")
-    if st.button("Record Transaction"):
-        cursor.execute(
-            "INSERT INTO Transactions (CustomerID, ArtworkID, SaleDate) VALUES (%s, %s, %s)",
-            (customer_id, artwork_id, sale_date),
-        )
-        cnx.commit()
+    transaction_date = st.date_input("Transaction Date")
+    total_amount = st.number_input("Total Amount")
+    payment_method = st.selectbox(
+        "Payment Method", ["Cash", "Credit Card", "Bank Transfer"]
+    )
+
+    cursor.execute("SELECT * FROM customers WHERE CustomerID = %s", (customer_id,))
+    customer = cursor.fetchone()
+
+    if customer:
+        cursor.execute("SELECT * FROM artwork WHERE ArtworkID = %s", (artwork_id,))
+        artwork = cursor.fetchone()
+
+        if artwork:
+            cursor.execute(
+                "INSERT INTO transactions (CustomerID, ArtworkID, TransactionDate, TotalAmount, PaymentMethod) VALUES (%s, %s, %s, %s, %s)",
+                (
+                    customer_id,
+                    artwork_id,
+                    transaction_date,
+                    total_amount,
+                    payment_method,
+                ),
+            )
+            cnx.commit()
+            st.success("Transaction recorded successfully")
+        else:
+            st.error("Artwork not found. Please insert the artwork first.")
+    else:
+        st.error("Customer not found. Please insert the customer first.")
 
 
 def view_transaction_history():
@@ -115,14 +195,28 @@ def view_transaction_history():
 # Loan Management
 def record_artwork_loan():
     artwork_id = st.number_input("Artwork ID")
+    customer_id = st.number_input("Customer ID")
     loan_date = st.date_input("Loan Date")
-    due_date = st.date_input("Due Date")
-    if st.button("Record Loan"):
-        cursor.execute(
-            "INSERT INTO LoanedArt (ArtworkID, LoanDate, DueDate) VALUES (%s, %s, %s)",
-            (artwork_id, loan_date, due_date),
-        )
-        cnx.commit()
+    return_date = st.date_input("Return Date")
+
+    cursor.execute("SELECT * FROM artwork WHERE ArtID = %s", (artwork_id,))
+    artwork = cursor.fetchone()
+
+    if artwork:
+        cursor.execute("SELECT * FROM customers WHERE CustomerID = %s", (customer_id,))
+        customer = cursor.fetchone()
+
+        if customer:
+            cursor.execute(
+                "INSERT INTO loanedart (ArtID, CustomerID, DateLoan, DueDate) VALUES (%s, %s, %s, %s)",
+                (artwork_id, customer_id, loan_date, return_date),
+            )
+            cnx.commit()
+            st.success("Loan recorded successfully")
+        else:
+            st.error("Customer not found. Please insert the customer first.")
+    else:
+        st.error("Artwork not found. Please insert the artwork first.")
 
 
 def view_loaned_artworks():
@@ -154,20 +248,26 @@ def create_exhibition():
 
 
 def assign_artwork_to_exhibition():
-    exhibition_id = st.number_input("Exhibition ID")
+    exhibition_id = st.number_input("Exhibition ID", key="assign_artwork_to_exhibition")
     artwork_id = st.number_input("Artwork ID")
     if st.button("Assign Artwork"):
-        cursor.execute(
-            "INSERT INTO ExhibitionArtworks (ExhibitionID, ArtworkID) VALUES (%s, %s)",
-            (exhibition_id, artwork_id),
-        )
-        cnx.commit()
+        cursor.execute("SELECT * FROM artwork WHERE ArtID = %s", (artwork_id,))
+        artwork = cursor.fetchone()
+        if artwork:
+            cursor.execute(
+                "INSERT INTO ArtExhibitions (ExhibitionID, ArtID) VALUES (%s, %s)",
+                (exhibition_id, artwork_id),
+            )
+            cnx.commit()
+            st.success("Artwork assigned to exhibition successfully")
+        else:
+            st.error("Artwork not found. Please insert the artwork first.")
 
 
 def view_artworks_in_exhibition():
-    exhibition_id = st.number_input("Exhibition ID")
+    exhibition_id = st.number_input("Exhibition ID", key="view_artworks_in_exhibition")
     artworks_df = pd.read_sql(
-        "SELECT * FROM Artwork WHERE ArtID IN (SELECT ArtworkID FROM ExhibitionArtworks WHERE ExhibitionID = %s)",
+        "SELECT * FROM Artwork WHERE ArtID IN (SELECT ArtID FROM ArtExhibitions WHERE ExhibitionID = %s)",
         cnx,
         params=(exhibition_id,),
     )
@@ -176,32 +276,83 @@ def view_artworks_in_exhibition():
 
 def record_visitor_attendance():
     exhibition_id = st.number_input("Exhibition ID")
-    visitor_count = st.number_input("Visitor Count")
+    visitor_id = st.number_input("Visitor ID")
+    visited_date = st.date_input("Visited Date")
     if st.button("Record Attendance"):
-        cursor.execute(
-            "INSERT INTO ExhibitionAttendance (ExhibitionID, VisitorCount) VALUES (%s, %s)",
-            (exhibition_id, visitor_count),
-        )
-        cnx.commit()
+        cursor.execute("SELECT * FROM Exhibition WHERE ExhID = %s", (exhibition_id,))
+        exhibition = cursor.fetchone()
+        if exhibition:
+            cursor.execute(
+                "INSERT INTO VisitorExhibition (ExhibitionId, VisitorID, Visited) VALUES (%s, %s, %s)",
+                (exhibition_id, visitor_id, visited_date),
+            )
+            cnx.commit()
+            st.success("Visitor attendance recorded successfully")
+        else:
+            st.error("Exhibition not found. Please insert the exhibition detail first.")
 
 
-# Employee and Department Management
 def add_employee():
+    global add_clicked
+    empID = st.number_input("Employee ID")
     fname = st.text_input("First Name")
     lname = st.text_input("Last Name")
     email = st.text_input("Email")
     department_id = st.number_input("Department ID")
-    if st.button("Add Employee"):
-        cursor.execute(
-            "INSERT INTO Employee (Fname, Lname, Email, DepartmentID) VALUES (%s, %s, %s, %s)",
-            (fname, lname, email, department_id),
-        )
-        cnx.commit()
+
+    # Check if department exists
+    cursor.execute("SELECT * FROM department WHERE DepartmentID = %s", (department_id,))
+    department = cursor.fetchone()
+
+    if department:
+        if st.button("Add Employee") and not add_clicked:
+            add_clicked = True
+            cursor.execute(
+                "INSERT INTO Employee (EmployeeID, FirstName, LastName, Email, DepartmentID) VALUES (%s, %s, %s, %s, %s)",
+                (empID, fname, lname, email, department_id),
+            )
+            cnx.commit()
+            st.success("Employee added successfully")
+            add_clicked = False
+    else:
+        st.error("Department not found")
 
 
 def view_employees():
     employees_df = pd.read_sql("SELECT * FROM Employee", cnx)
     st.table(employees_df)
+
+
+def update_employee():
+    global update_clicked
+    employee_id = st.number_input("Employee ID", key="update_employee_id")
+    fname = st.text_input("First Name", key="update_fname")
+    lname = st.text_input("Last Name", key="update_lname")
+    email = st.text_input("Email", key="update_email")
+    department_id = st.number_input("Department ID", key="update_department_id")
+    if (
+        st.button("Update Employee", key="update_employee_button")
+        and not update_clicked
+    ):
+        update_clicked = True
+        cursor.execute(
+            "UPDATE Employee SET FirstName = %s, LastName = %s, Email = %s, DepartmentID = %s WHERE EmployeeID = %s",
+            (fname, lname, email, department_id, employee_id),
+        )
+        cnx.commit()
+        st.success("Employee updated successfully")
+        update_clicked = False
+
+
+def delete_employee():
+    global delete_clicked
+    employee_id = st.number_input("Employee ID", key="delete_employee_id")
+    if st.button("Delete Employee", key="delete_employee_button"):
+        delete_clicked = True
+        cursor.execute("DELETE FROM Employee WHERE EmployeeID = %s", (employee_id,))
+        cnx.commit()
+        st.success("Employee deleted successfully")
+        delete_clicked = False
 
 
 def view_art_worth_more_than_average():
@@ -268,7 +419,7 @@ def check_if_piece_is_scheduled_for_exhibition(artwork_title):
         select e.Theme, e.GalleryWing, concat(e.StartDate, " to ", e.EndDate) as ExhibitionPeriod
         from ArtExhibitions ae
         inner join Exhibition e on ae.ExhibitionID = e.ExhID
-        where ae.ArtID = (select ArtID from Artwork where Title like %s)
+        where ae.ArtID in (select ArtID from Artwork where Title like %s)
         order by e.StartDate;
     """
     artworks_df = pd.read_sql(query, cnx, params=("%" + artwork_title + "%",))
@@ -353,11 +504,13 @@ if st.session_state.current_page == "Artwork Management":
     view_artworks()
     add_artwork()
     update_artwork()
+    delete_artwork()
 elif st.session_state.current_page == "Artist Management":
     st.title("Artist Management")
     view_artists()
     add_artist()
     list_artworks_by_artist()
+    delete_artist()
 elif st.session_state.current_page == "Customer and Transaction Handling":
     st.title("Customer and Transaction Handling")
     register_customer()
@@ -378,6 +531,8 @@ elif st.session_state.current_page == "Employee and Department Management":
     st.title("Employee and Department Management")
     add_employee()
     view_employees()
+    update_employee()
+    delete_employee()
 elif st.session_state.current_page == "Reporting and Analytics":
     st.title("Reporting and Analytics")
     generate_report()
