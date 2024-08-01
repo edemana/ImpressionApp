@@ -1,7 +1,7 @@
 import streamlit as st
 import pandas as pd
 import mysql.connector
-
+import os
 import streamlit as st
 import base64
 from PIL import Image, ImageFilter
@@ -118,20 +118,25 @@ def check_password():
         return True
 
 
-try:
-    if st.session_state.current_page == "password":
-        st.title("Welcome to Impression's Database")
-except AttributeError:
-    pass
+st.title("Impression Gallery Database")
+
+
 if check_password():
 
-    # Connect to your database
+    # Load environment variables from toml file
+    user = os.getenv("DB_USER")
+    password = os.getenv("DB_PASSWORD")
+    host = os.getenv("DB_HOST")
+    port = int(os.getenv("DB_PORT"))
+    database = os.getenv("DB_NAME")
+
+    # Connect to database
     cnx = mysql.connector.connect(
-        user="root",
-        password="Edemk22@2024",
-        host="localhost",
-        port=3307,
-        database="artgallery",
+        user=user,
+        password=password,
+        host=host,
+        port=port,
+        database=database,
     )
 
     # Create a cursor object
