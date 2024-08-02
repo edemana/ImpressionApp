@@ -6,12 +6,12 @@ services:
     startCommand: "streamlit run art_gallery.py"
     envVars:
       - key: DB_USER
-        value: root
+        value: impressiondb_user
       - key: DB_PASSWORD
-        value: Edemk22@2024
+        value: nCVofiZLMOLwvqtYJO1ytM3WtwJMeBCG
       - key: DB_HOST
-        value: localhost
+        value: dpg-cqmc2vbqf0us73a9o5kg-a
       - key: DB_PORT
-        value: 3307
+        value: 5432
       - key: DB_NAME
-        value: artgallery
+        value: impressiondb
