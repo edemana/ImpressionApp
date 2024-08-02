@@ -105,7 +105,7 @@ if check_password():
     user = os.environ.get("DB_USER")
     password = os.environ.get("DB_PASSWORD")
     host = os.environ.get("DB_HOST")
-    port = int(os.environ.get("DB_PORT", "3306"))  # Default to 3306 if not set
+    port = os.environ.get("DB_PORT")  # Default to 3306 if not set
     database = os.environ.get("DB_NAME")
 
     # Connect to database
@@ -202,7 +202,7 @@ if check_password():
         global add_clicked
         artistID = st.number_input("Artist ID")
         # Check if ArtistID already exists
-        cursor.execute("SELECT * FROM artists WHERE ArtistID = %s", (artistID,))
+        cursor.execute("SELECT * FROM Artists WHERE ArtistID = %s", (artistID,))
         existing_artist = cursor.fetchone()
         if existing_artist:
             st.error("Artist ID already exists")
