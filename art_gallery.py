@@ -1,22 +1,22 @@
 import streamlit as st
 import pandas as pd
-import mysql.connector
+import psycopg2
 import os
-import streamlit as st
 import base64
-from PIL import Image, ImageFilter
+from PIL import Image, ImageFilter, ImageOps
 import io
 
 
 def get_image_base64(image_path):
     img = Image.open(image_path)
+    img = img.resize((800, 600))  # resize the image
     img = img.convert("RGBA")
 
     # Create a new image with a semi-transparent black layer
     darkened = Image.new("RGBA", img.size, (0, 0, 0, 128))
     img = Image.alpha_composite(img, darkened)
 
-    # Apply blur (you may need to install pillow-simd for better performance)
+    # Apply blur
     img = img.filter(ImageFilter.GaussianBlur(radius=5))
 
     buffered = io.BytesIO()
@@ -24,42 +24,31 @@ def get_image_base64(image_path):
     return base64.b64encode(buffered.getvalue()).decode()
 
 
-def set_bg_hack(main_bg):
-    """
-    A function to unpack an image from root folder and set as bg.
-    """
-    main_bg_ext = "png"
+def add_bg_from_local(image_file):
+    image_cache = {}  # cache dictionary
+    if image_file in image_cache:
+        image_base64 = image_cache[image_file]
+    else:
+        image_base64 = get_image_base64(image_file)
+        image_cache[image_file] = image_base64
 
     st.markdown(
         f"""
-         <style>
-         .stApp {{
-             background: url(data:image/{main_bg_ext};base64,{main_bg});
-             background-size: cover;
-         }}
-         </style>
-         """,
+    <style>
+    .stApp {{
+        background-image: url(data:assets/pic4.jpg;base64,{image_base64});
+        background-size: 100% 100%; /* Cover the entire page */
+        background-repeat: no-repeat;
+        background-position: center center;
+    }}
+    </style>
+    """,
         unsafe_allow_html=True,
     )
 
 
-def add_bg_from_url():
-    st.markdown(
-        f"""
-         <style>
-         .stApp {{
-             background-image: url("assets\pic4.jpg");
-             background-attachment: fixed;
-             background-size: cover
-         }}
-         </style>
-         """,
-        unsafe_allow_html=True,
-    )
-
-
-add_bg_from_url()
-# Rest of your Streamlit app code...
+# Call this function at the beginning of your app
+add_bg_from_local("assets/pic4.jpg")
 
 
 def load_css(file_name):
@@ -120,7 +109,7 @@ if check_password():
     database = os.getenv("DB_NAME")
 
     # Connect to database
-    cnx = mysql.connector.connect(
+    cnx = psycopg2.connect(
         user=user,
         password=password,
         host=host,
@@ -144,6 +133,7 @@ if check_password():
 
     def add_artwork():
         global add_clicked
+        artId = st.number_input("ArtID", key="add_artwork_id")
         title = st.text_input("Title", key="add_artwork_title")
         date_created = st.date_input("Date Created", key="add_artwork_date")
         date_received = st.date_input("Date Received", key="add_date_received")
@@ -153,8 +143,8 @@ if check_password():
         if st.button("Add Artwork", key="add_artwork_button") and not add_clicked:
             add_clicked = True
             cursor.execute(
-                "INSERT INTO Artwork (Title, DateCreated, DateReceived, Genre, EstimatedValue) VALUES (%s, %s, %s, %s, %s)",
-                (title, date_created, date_received, genre, estimated_value),
+                "INSERT INTO Artwork (ArtID, Title, DateCreated, DateReceived, Genre, EstimatedValue) VALUES (%s, %s, %s, %s, %s, %s)",
+                (artId, title, date_created, date_received, genre, estimated_value),
             )
             cnx.commit()
             add_clicked = False
