@@ -1,6 +1,6 @@
 import streamlit as st
 import pandas as pd
-import psycopg2
+import mysql.connector
 import os
 import base64
 from PIL import Image, ImageFilter, ImageOps
@@ -101,15 +101,15 @@ st.title("Impression Gallery Database")
 
 if check_password():
 
-    # Load environment variables from toml file
-    user = os.getenv("DB_USER")
-    password = os.getenv("DB_PASSWORD")
-    host = os.getenv("DB_HOST")
-    port = int(os.getenv("DB_PORT"))
-    database = os.getenv("DB_NAME")
+    # Use os.environ to get environment variables
+    user = os.environ.get("DB_USER")
+    password = os.environ.get("DB_PASSWORD")
+    host = os.environ.get("DB_HOST")
+    port = int(os.environ.get("DB_PORT", "3306"))  # Default to 3306 if not set
+    database = os.environ.get("DB_NAME")
 
     # Connect to database
-    cnx = psycopg2.connect(
+    cnx = mysql.connector.connect(
         user=user,
         password=password,
         host=host,
